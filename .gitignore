@@ -1,0 +1,80 @@
+# 本机环境
+venv/
+venv-oft/
+.venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+*.so
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# 本机配置、缓存和工具状态
+.libero/
+.claude/
+.codex/
+.agents/
+.cache/
+.DS_Store
+.env
+.env.*
+!.env.example
+*.log
+
+# 第三方源码仓库
+# 方案 A：顶层仓库只保存你的实验文档、脚本、patch 和结果摘要。
+# openvla / openvla-oft / LIBERO / lerobot / openpi 保持为外部依赖，不直接纳入本仓库。
+openvla/
+openvla-oft/
+LIBERO/
+lerobot/
+openpi/
+
+# 数据集、模型权重和训练输出
+datasets/
+runs/
+hf_models/
+cache/
+data/
+adapter-tmp/
+**/adapter-tmp/
+*.safetensors
+*.pt
+*.pth
+*.ckpt
+*.bin
+*.onnx
+*.gguf
+*.npz
+*.npy
+
+# 实验日志、W&B 和 rollout 视频
+wandb/
+**/wandb/
+rollouts/
+**/rollouts/
+experiments/logs/
+**/experiments/logs/
+*.wandb
+*.mp4
+*.avi
+*.mov
+*.mkv
+
+# 大型压缩包和临时下载
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+downloads/
+tmp/
+temp/
+
+# 保留建议：
+# - README.md、openvla_plan.md、pi0_plan.md、openvla_resume.md 可以提交。
+# - docs/、scripts/、configs/、results/、patches/ 适合提交精简后的实验资料。
