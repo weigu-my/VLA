@@ -36,6 +36,8 @@ openpi/
 # 数据集、模型权重和训练输出
 datasets/
 runs/
+models/
+outputs/
 hf_models/
 cache/
 data/
