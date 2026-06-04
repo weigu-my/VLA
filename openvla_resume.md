@@ -44,15 +44,15 @@ VLA 机器人策略对比研究：OpenVLA / OpenVLA-OFT / Pi0 / Pi0.5 微调与�
 | 官方 OpenVLA-OFT，正确环境 | LIBERO-Spatial, 50 episodes | 50/50 | 100.0% |
 | 官方 OpenVLA-OFT，正确环境 | LIBERO-Spatial, 500 episodes | 492/500 | 98.4% |
 
-### 三类架构横向对比（LIBERO-Spatial, 50 episodes = 5 trials × 10 任务）
+### 三类架构横向对比（LIBERO-Spatial，500 episodes = 50 trials × 10 任务）
 
-| 模型 | 动作表示 | 成功次数 | 成功率 |
-| --- | --- | ---: | ---: |
-| Pi0（微调版 v044） | 连续 / flow matching | 33/50 | 66.0% |
-| 官方 OpenVLA finetuned | 离散 action token | 41/50 | 82.0% |
-| Pi0.5（微调版） | 连续 / flow matching + AdaRMS | 42/50 | 84.0% |
+| 模型 | 动作表示 | 成功次数 | 成功率（500-ep） | 成功率（50-ep） |
+| --- | --- | ---: | ---: | ---: |
+| Pi0（微调版 v044） | 连续 / flow matching | 309/500 | 61.8% | 66.0% |
+| 官方 OpenVLA finetuned | 离散 action token | 409/500 | 81.8% | 82.0% |
+| Pi0.5（微调版） | 连续 / flow matching + AdaRMS | 435/500 | 87.0% | 84.0% |
 
-> 注：Pi0 / Pi0.5 为全 4 个 LIBERO suite 联合微调的通才模型，OpenVLA 为仅 LIBERO-Spatial 微调的专才模型；50-episode 为小样本（±约 5%）。最难任务「pick up the black bowl on the ramekin」上 OpenVLA 5/5、Pi0.5 2/5、Pi0 0/5。
+> 结论（500-ep 大样本）：排名 Pi0.5 > OpenVLA > Pi0，Pi0.5 在 8/10 任务上最优；Pi0 → Pi0.5 的架构改动（state 文本化、AdaRMS 时间步条件化、分位数归一化）带来 **+25 个百分点**提升。最难任务「pick up the black bowl on the ramekin」（把碗从另一小碗顶上叼起、高窄易倾的精细接触）上离散 token 的 OpenVLA 35/50(70%) 明显优于 flow matching 的 Pi0.5 18/50(36%) 与 Pi0 8/50(16%)，揭示连续动作生成在低容错接触场景下的稳定性短板。三个模型在完全相同的 hf-libero 初始状态下评测，OpenVLA 50→500-ep 仅偏移 0.2% 验证了评测流程的可复现性。
 
 ## 简历精简版
 
