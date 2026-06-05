@@ -28,8 +28,9 @@ VLA 机器人策略对比研究：OpenVLA / OpenVLA-OFT / Pi0 / Pi0.5 微调与�
 - 改造 OpenVLA 与 OpenVLA-OFT 评估脚本，使不同 run 的日志与 rollout 视频按 run_id 分目录保存，提升实验结果管理与可复现性。
 - 基于 LeRobot 搭建 Pi0 / Pi0.5（flow matching VLA）的 LIBERO 仿真评估链路，在 numpy 2 / Python 3.12 环境下解决 `hf-libero`、robosuite、mujoco 依赖与 cmake 构建、`~/.libero` 配置等环境问题，复用 LeRobot 原生 `lerobot-eval` + `libero` env 驱动评测。
 - 在相同 50-episode（5 trials × 10 任务）设置下完成 OpenVLA、Pi0、Pi0.5 三方对比评估，成功率分别为 82% / 66% / 84%；定位官方 `lerobot/pi0_libero` 仓库缺失归一化统计量、为老格式 in-model norm buffer 的"基座占位"模型（输出恒为均值动作、夹爪不闭合、成功率 0%）的问题，改用自带 stats 的 `*_finetuned_v044` 微调版恢复正常评测。
-- 按任务维度归因 flow matching 与离散 token 两类架构的失败模式：Pi0/Pi0.5 在「碗叠在小碗上」这类高、窄、易倾倒的精细接触抓取任务上显著失败（Pi0 0/5、Pi0.5 2/5），而 OpenVLA 离散动作满分（5/5），揭示连续动作生成在低容错接触场景下的稳定性短板。
-- 验证 Pi0 → Pi0.5 架构改动（state 文本化、AdaRMS 时间步条件化、分位数归一化）带来的收益：相同数据与评估设置下成功率从 66% 提升至 84%（+18 个百分点），提升集中在精细定位与抓取任务。
+- 定位评估协议差异（关键）：对比 openpi 官方 LIBERO 评测脚本，发现其 `replan_steps=5`（每 5 步闭环重规划），而 LeRobot 默认 `n_action_steps=50`（执行完整 50 步动作 chunk 才重规划，近似开环）。逐项核对两边评测 config（state 构成、图像 180° 翻转、resize_with_pad、num_steps_wait 均一致），确认 replan 频率为主因。修正为 replan=5 后，Pi0.5 500-ep 成功率从 87.0% 提升至 **96.6%**，逼近 openpi 官方宣传的 98.8%（残余差距来自渲染分辨率 640×480 vs 256、MEAN_STD vs 分位数归一化等二阶因素）。
+- 按任务维度归因两类架构的失败模式：最难任务「碗叠在小碗上」（高窄易倾的精细接触抓取），在闭环协议下 Pi0.5 从 36% 提升到 70%（说明其具备能力，此前低分是开环协议所致），而 Pi0 始终为 16%（换协议无改善，为真实能力缺陷）；OpenVLA-OFT 在该任务达 96%。
+- 验证 Pi0 → Pi0.5 架构改动（state 文本化、AdaRMS 时间步条件化、分位数归一化）的收益：相同数据与评估设置下，500-ep 成功率从 61.8% 提升至 87.0%（开环协议）、从 69.4% 提升至 96.6%（闭环协议），提升集中在精细定位与接触抓取任务。
 
 ## 实验结果
 
@@ -48,12 +49,24 @@ VLA 机器人策略对比研究：OpenVLA / OpenVLA-OFT / Pi0 / Pi0.5 微调与�
 
 | 模型 | 动作表示 | 成功次数 | 成功率（500-ep） | 成功率（50-ep） |
 | --- | --- | ---: | ---: | ---: |
+| 自训练 OpenVLA 15k（4-bit QLoRA） | 离散 action token（自回归） | 315/500 | 63.0% | 58.0% |
 | Pi0（微调版 v044） | 连续 / flow matching | 309/500 | 61.8% | 66.0% |
 | 官方 OpenVLA finetuned | 离散 action token（自回归） | 409/500 | 81.8% | 82.0% |
-| Pi0.5（微调版） | 连续 / flow matching + AdaRMS | 435/500 | 87.0% | 84.0% |
+| Pi0.5（微调版 v044, MEAN_STD） | 连续 / flow matching + AdaRMS | 435/500 | 87.0% | 84.0% |
 | 官方 OpenVLA-OFT | 连续 L1 动作头 + action chunk（并行解码） | 492/500 | **98.4%** | 100.0% |
 
-> 结论（500-ep 大样本，四模型在完全相同的 hf-libero 初始状态下评测）：OFT > Pi0.5 > OpenVLA > Pi0。Pi0 → Pi0.5 的架构改动（state 文本化、AdaRMS 时间步条件化、分位数归一化）带来 **+25 个百分点**提升。最难任务「pick up the black bowl on the ramekin」（把碗从另一小碗顶上叼起、高窄易倾的精细接触）上各模型分化最大：OFT 48/50(96%) > OpenVLA 35/50(70%) >> Pi0.5 18/50(36%) >> Pi0 8/50(16%)。值得注意的是——OFT 同样是连续动作，却在该任务上接近满分，说明短板并非"连续动作"本身，而是**扩散式 flow matching 多步去噪在低容错接触抓取上的稳定性问题**，而 OFT 的连续 L1 回归 + action chunk + 并行解码反而最稳。OpenVLA 50→500-ep 仅偏移 0.2% 验证了评测流程的可复现性。
+> 自训练 OpenVLA（15k）vs 官方 OpenVLA finetuned（同数据 libero_spatial_no_noops、同 LoRA rank 32、同动作表示）相差 63.0% vs 81.8%，差距来自 RTX 3090 单卡的两个资源妥协：(1) 4-bit QLoRA 量化损伤冻结骨干的表征精度（官方为 bf16）；(2) 训练欠充分——因 checkpoint 保存阶段重复合并 7B 模型导致 GPU idle，于 step 15000 手动中断（计划 20k），自身 2.5k→15k 仍处陡峭上升段（8%→58%）未收敛。即"数据/方法一致，差距主要是算力与训练步数"。
+
+> 注：上表 Pi0/Pi0.5 使用 LeRobot 默认 `n_action_steps=50`（开环执行整段 chunk）。OpenVLA 为单步自回归（天然每步重规划），故上表在控制频率上对 Pi0/Pi0.5 不利；下表给出对齐 openpi 官方 `replan_steps=5` 闭环协议后的结果。
+
+### 评估协议对齐后（replan=5，闭环重规划，LIBERO-Spatial 500-ep）
+
+| 模型 | n_action_steps=50（开环）| n_action_steps=5（闭环，对齐 openpi）| 提升 |
+| --- | ---: | ---: | ---: |
+| Pi0（微调版 v044） | 61.8% | 69.4% | +7.6 |
+| Pi0.5（微调版 v044, MEAN_STD） | 87.0% | **96.6%** | +9.6 |
+
+> 结论：Pi0.5 在对齐官方协议后达 **96.6%**，逼近 openpi 官方宣传的 98.8%（残余差距来自渲染分辨率 640×480 vs 256、MEAN_STD vs 分位数归一化）。说明此前 87% 主要是评测协议（开环执行 50 步动作 chunk）造成的低估，而非模型能力差距。最难任务「on the ramekin」上 Pi0.5 随协议从 36%→70%（具备能力），Pi0 始终 16%（真实能力缺陷），OFT 96%——区分了"协议假象"与"真实架构差距"。四模型综合排名（闭环协议下）：OFT 98.4% > Pi0.5 96.6% > OpenVLA 81.8% > Pi0 69.4%。
 
 ## 简历精简版
 
