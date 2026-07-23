@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "exported_at": "2026-07-23",
+  "experiment": "anonymized_pi05_full_finetune",
+  "privacy_note": "The W&B entity, run URL, private task name, remote host path, and dataset identifiers were intentionally removed.",
+  "training_config": {
+    "model_family": "pi05",
+    "fine_tuning_method": "full_fine_tuning",
+    "dtype": "bfloat16",
+    "batch_size": 256,
+    "num_train_steps": 50000,
+    "action_horizon": 50,
+    "action_dim": 32,
+    "learning_rate_schedule": {
+      "type": "warmup_then_decay",
+      "warmup_steps": 2500,
+      "peak_lr": 0.00002,
+      "decay_steps": 50000,
+      "decay_lr": 0.000002
+    },
+    "checkpoint_save_interval": 5000,
+    "final_checkpoint_step": 49999
+  },
+  "history": {
+    "sampled_rows": 250,
+    "sampled_step_min": 0,
+    "sampled_step_max": 49800
+  },
+  "metrics": {
+    "action_loss": {
+      "first": 0.2671337127685547,
+      "last": 0.0016830309759825468,
+      "minimum": 0.001648984383791685,
+      "minimum_step": 48600,
+      "first_to_last_change_percent": -99.36996683850207,
+      "head_25_mean": 0.01940542407333851,
+      "tail_25_mean": 0.001711876904591918
+    },
+    "grad_norm": {
+      "first": 6.103158473968506,
+      "last": 0.017592918127775192,
+      "minimum": 0.01658211275935173,
+      "minimum_step": 45800
+    },
+    "param_norm": {
+      "first": 1802.386474609375,
+      "last": 1806.2955322265625,
+      "first_to_last_change_percent": 0.21688232087042797
+    },
+    "learning_rate": {
+      "first_sample": 7.996277417987585e-09,
+      "maximum_sample": 1.999914093175903e-05,
+      "maximum_sample_step": 2800,
+      "last_sample": 2.0018310351588298e-06
+    },
+    "steady_state_step_time_seconds": {
+      "median": 2.880087354183197,
+      "tail_25_mean": 2.9000913639068604
+    }
+  },
+  "assessment": {
+    "optimization": "Training loss and gradient norm converged without evidence of gradient explosion.",
+    "validation_available": false,
+    "policy_quality_conclusion": "Training metrics alone are insufficient; checkpoint-level offline or rollout evaluation is still required.",
+    "checkpoint_uploaded_to_wandb": false
+  }
+}

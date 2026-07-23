@@ -1,0 +1,6 @@
+num_inference_steps,replan_steps,episodes,successes,success_rate_percent,chunk_latency_ms
+1,5,50,49,98.0,104.7
+2,5,50,48,96.0,106.6
+5,5,50,50,100.0,115.1
+10,5,50,48,96.0,130.2
+50,5,50,47,94.0,245.5

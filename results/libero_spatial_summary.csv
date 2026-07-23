@@ -1,0 +1,14 @@
+model,checkpoint_source,action_representation,replan_steps,episodes,successes,success_rate_percent,notes
+OpenVLA self-trained 2.5k,self-trained 4-bit QLoRA,discrete action tokens,1,50,4,8.0,early checkpoint
+OpenVLA self-trained 15k,self-trained 4-bit QLoRA,discrete action tokens,1,50,29,58.0,training stopped before planned 20k
+OpenVLA self-trained 15k,self-trained 4-bit QLoRA,discrete action tokens,1,500,315,63.0,training stopped before planned 20k
+OpenVLA finetuned,official finetuned,discrete action tokens,1,50,41,82.0,specialist LIBERO-Spatial checkpoint
+OpenVLA finetuned,official finetuned,discrete action tokens,1,500,409,81.8,specialist LIBERO-Spatial checkpoint
+OpenVLA-OFT,official finetuned,continuous action chunk,unspecified,50,50,100.0,correct custom dependency environment
+OpenVLA-OFT,official finetuned,continuous action chunk,unspecified,500,492,98.4,correct custom dependency environment
+Pi0 finetuned,community v0.4.4,flow matching action chunk,50,50,33,66.0,full chunk execution
+Pi0 finetuned,community v0.4.4,flow matching action chunk,50,500,309,61.8,full chunk execution
+Pi0 finetuned,community v0.4.4,flow matching action chunk,5,500,347,69.4,closed-loop replanning
+Pi0.5 finetuned,community v0.4.4 MEAN_STD,flow matching action chunk,50,50,42,84.0,full chunk execution
+Pi0.5 finetuned,community v0.4.4 MEAN_STD,flow matching action chunk,50,500,435,87.0,full chunk execution
+Pi0.5 finetuned,community v0.4.4 MEAN_STD,flow matching action chunk,5,500,483,96.6,closed-loop replanning

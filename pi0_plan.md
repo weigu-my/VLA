@@ -35,7 +35,7 @@
 LeRobot 是 HuggingFace 的机器人学习框架，已原生集成 Pi0/Pi0.5。
 
 ```bash
-cd /home/wujie/VLA
+cd "${VLA_ROOT:-$HOME/VLA}"
 git clone https://github.com/huggingface/lerobot.git
 cd lerobot
 pip install -e ".[pi0]"
@@ -44,7 +44,7 @@ pip install -e ".[pi0]"
 ### 1.2 克隆 OpenPI（JAX 官方仓库，用于参考架构）
 
 ```bash
-cd /home/wujie/VLA
+cd "${VLA_ROOT:-$HOME/VLA}"
 git clone https://github.com/Physical-Intelligence/openpi.git
 ```
 
@@ -97,7 +97,7 @@ VLM 提供条件信息（图像+语言），Action Expert 负责去噪生成
 
 ### 3.2 编写推理测试脚本
 
-创建 `/home/wujie/VLA/test_pi0_inference.py`：
+创建 `${VLA_ROOT}/test_pi0_inference.py`：
 
 ```python
 """Pi0 推理测试：验证模型加载和动作生成"""
@@ -161,7 +161,7 @@ Pi0 微调的显存需求：
 ### 5.2 尝试 LeRobot LoRA 微调
 
 ```bash
-cd /home/wujie/VLA/lerobot
+cd "${VLA_ROOT:-$HOME/VLA}/lerobot"
 
 python lerobot/scripts/train.py \
   --policy.type=pi0 \
@@ -171,7 +171,7 @@ python lerobot/scripts/train.py \
   --training.lr=2e-5 \
   --training.steps=10000 \
   --wandb.project="pi0-rtx3090" \
-  --wandb.entity="weigu-tsinghua-university"
+  --wandb.entity="<your-wandb-entity>"
 ```
 
 ### 5.3 如果显存不足的备选方案
@@ -190,7 +190,7 @@ python lerobot/scripts/train.py \
 
 | 模型 | Checkpoint |
 |------|-----------|
-| OpenVLA (你微调的 15K) | `/home/wujie/VLA/runs/...-15000_chkpt` |
+| OpenVLA (你微调的 15K) | `${VLA_ROOT}/runs/...-15000_chkpt` |
 | Pi0 (预训练) | `lerobot/pi0_base` |
 | Pi0.5 (LIBERO 微调版) | `lerobot/pi05_libero_finetuned` |
 
@@ -279,7 +279,7 @@ python lerobot/scripts/train.py \
 
 ## 验证清单
 
-- [ ] 阶段三：Pi0 推理脚本输出连续动作轨迹，显存 < 12GB
-- [ ] 阶段五：微调训练 loss 下降（如显存允许）
-- [ ] 阶段六：LIBERO Spatial 评估成功率对比表（OpenVLA vs Pi0 vs Pi0.5）
-- [ ] 阶段七：能清晰解释 Flow Matching 与离散 Token 化的优劣
+- [x] 阶段三：Pi0 推理脚本输出连续动作轨迹（test_pi0_inference.py）。显存：bf16 微调版 8.4GB(<12GB)✓；pi0_base 原生 float32 约 15GB
+- [ ] 阶段五：微调训练 loss 下降（如显存允许）—— 未自训 Pi0/Pi0.5，改用官方/社区微调版评测
+- [x] 阶段六：LIBERO-Spatial 评估对比完成（500-ep）。成功率：OFT 98.4% > Pi0.5 96.6% > OpenVLA 81.8% > 自训OpenVLA 63.0% > Pi0 69.4%(replan=5)；含推理速度(412/358 actions/s)与动作平滑度(Pi0.5 jerk↓33%)对比。详见 openvla_resume.md
+- [x] 阶段七：已能解释 Flow Matching vs 离散 Token 的优劣（架构代码精读 + 实证：chunk 吞吐高 40-80×、动作更平滑；但多步去噪在低容错接触抓取上不如离散token/连续L1稳——见 task5 分析）

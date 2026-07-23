@@ -1,11 +1,20 @@
 """Pi0 推理测试：验证模型加载、显存占用和动作生成"""
+import argparse
 import time
+
 import torch
 from lerobot.policies.pi0 import PI0Policy
-from lerobot.policies.pi0.configuration_pi0 import PI0Config
 
-DEVICE = "cuda"
-MODEL_PATH = "/home/wujie/VLA/models/pi0_base"
+
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument(
+    "--model-path",
+    default="lerobot/pi0_base",
+    help="Pi0 checkpoint 路径或 Hugging Face 模型 ID",
+)
+parser.add_argument("--device", default="cuda")
+parser.add_argument("--runs", type=int, default=5, help="测速重复次数")
+args = parser.parse_args()
 
 print("=" * 60)
 print("Pi0 推理测试")
@@ -15,8 +24,8 @@ print("=" * 60)
 print("\n[1] 加载 Pi0 模型 (float32)...")
 torch.cuda.reset_peak_memory_stats()
 
-policy = PI0Policy.from_pretrained(MODEL_PATH)
-policy.to(device=DEVICE)
+policy = PI0Policy.from_pretrained(args.model_path)
+policy.to(device=args.device)
 policy.eval()
 
 mem_after_load = torch.cuda.max_memory_allocated() / 1024**3
@@ -27,18 +36,18 @@ print("\n[2] 构造模拟输入...")
 
 # pi0_base 期望 3 个摄像头 (224x224) + 32维状态 + 语言指令
 batch = {}
-batch["observation.images.base_0_rgb"] = torch.randn(1, 3, 224, 224, device=DEVICE)
-batch["observation.images.left_wrist_0_rgb"] = torch.randn(1, 3, 224, 224, device=DEVICE)
-batch["observation.images.right_wrist_0_rgb"] = torch.randn(1, 3, 224, 224, device=DEVICE)
-batch["observation.state"] = torch.randn(1, 32, device=DEVICE)
+batch["observation.images.base_0_rgb"] = torch.randn(1, 3, 224, 224, device=args.device)
+batch["observation.images.left_wrist_0_rgb"] = torch.randn(1, 3, 224, 224, device=args.device)
+batch["observation.images.right_wrist_0_rgb"] = torch.randn(1, 3, 224, 224, device=args.device)
+batch["observation.state"] = torch.randn(1, 32, device=args.device)
 
 # 语言指令 tokenization
 from transformers import AutoTokenizer
 tokenizer = AutoTokenizer.from_pretrained("google/paligemma-3b-pt-224")
 text = "pick up the red block and place it on the table"
 tokens = tokenizer(text, padding="max_length", max_length=48, truncation=True, return_tensors="pt")
-batch["observation.language.tokens"] = tokens["input_ids"].to(DEVICE)
-batch["observation.language.attention_mask"] = tokens["attention_mask"].to(DEVICE).bool()
+batch["observation.language.tokens"] = tokens["input_ids"].to(args.device)
+batch["observation.language.attention_mask"] = tokens["attention_mask"].to(args.device).bool()
 
 print(f"    图像: 3x [1, 3, 224, 224]")
 print(f"    状态: [1, 32]")
@@ -60,16 +69,15 @@ print(f"    输出动作均值: {action.mean().item():.4f}")
 
 # 测速
 policy.reset()
-n_runs = 5
 torch.cuda.synchronize()
 t0 = time.time()
-for _ in range(n_runs):
+for _ in range(args.runs):
     policy.reset()
     with torch.no_grad():
         _ = policy.select_action(batch)
     torch.cuda.synchronize()
 t1 = time.time()
-avg_time = (t1 - t0) / n_runs
+avg_time = (t1 - t0) / args.runs
 print(f"\n    平均推理时间: {avg_time:.3f}s ({1/avg_time:.1f} FPS)")
 print(f"    去噪步数: {policy.config.num_inference_steps}")
 print(f"    动作 chunk 大小: {policy.config.chunk_size}")

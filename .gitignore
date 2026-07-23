@@ -32,6 +32,7 @@ openvla-oft/
 LIBERO/
 lerobot/
 openpi/
+openpi_modified/
 
 # 数据集、模型权重和训练输出
 datasets/
@@ -56,6 +57,7 @@ adapter-tmp/
 # 实验日志、W&B 和 rollout 视频
 wandb/
 **/wandb/
+wandb_analysis/
 rollouts/
 **/rollouts/
 experiments/logs/

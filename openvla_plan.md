@@ -21,7 +21,7 @@ pip install torch==2.2.0 torchvision==0.17.0 --index-url https://download.pytorc
 ### 1.2 克隆仓库并安装依赖
 
 ```bash
-cd /home/wujie/VLA
+cd "${VLA_ROOT:-$HOME/VLA}"
 git clone https://github.com/openvla/openvla.git
 cd openvla && pip install -e .
 
@@ -42,7 +42,7 @@ pip install wandb
 ### 1.3 克隆 OpenVLA-OFT（后续对比实验用）
 
 ```bash
-cd /home/wujie/VLA
+cd "${VLA_ROOT:-$HOME/VLA}"
 git clone https://github.com/moojink/openvla-oft.git
 ```
 
@@ -78,7 +78,7 @@ git clone https://github.com/moojink/openvla-oft.git
 
 ### 3.1 编写推理测试脚本
 
-创建 `/home/wujie/VLA/test_inference.py`：
+创建 `${VLA_ROOT}/test_inference.py`：
 
 ```python
 from transformers import AutoModelForVision2Seq, AutoProcessor, BitsAndBytesConfig
@@ -121,11 +121,13 @@ print(f"Predicted action (7-DoF): {action}")
 推荐使用 LIBERO，因为评估流程完善、有对比基准。
 
 ```python
+import os
+
 from huggingface_hub import snapshot_download
 snapshot_download(
     "openvla/modified_libero_rlds",
     repo_type="dataset",
-    local_dir="/home/wujie/VLA/datasets/modified_libero_rlds",
+    local_dir=f"{os.environ['VLA_ROOT']}/datasets/modified_libero_rlds",
     allow_patterns=["libero_spatial_no_noops/*"],
 )
 ```
@@ -139,13 +141,13 @@ snapshot_download(
 ### 5.1 启动训练
 
 ```bash
-cd /home/wujie/VLA/openvla
+cd "${VLA_ROOT:-$HOME/VLA}/openvla"
 
 torchrun --standalone --nnodes 1 --nproc-per-node 1 vla-scripts/finetune.py \
   --vla_path "openvla/openvla-7b" \
-  --data_root_dir "/home/wujie/VLA/datasets/modified_libero_rlds" \
+  --data_root_dir "${VLA_ROOT:-$HOME/VLA}/datasets/modified_libero_rlds" \
   --dataset_name "libero_spatial_no_noops" \
-  --run_root_dir "/home/wujie/VLA/runs" \
+  --run_root_dir "${VLA_ROOT:-$HOME/VLA}/runs" \
   --use_quantization True \
   --use_lora True \
   --lora_rank 32 \
@@ -182,7 +184,7 @@ torchrun --standalone --nnodes 1 --nproc-per-node 1 vla-scripts/finetune.py \
 ### 6.1 安装 LIBERO 仿真环境
 
 ```bash
-cd /home/wujie/VLA
+cd "${VLA_ROOT:-$HOME/VLA}"
 git clone https://github.com/Lifelong-Robot-Learning/LIBERO.git
 pip install -e LIBERO
 
@@ -197,7 +199,7 @@ sudo apt install xvfb
 
 ```bash
 xvfb-run -a python experiments/robot/libero/run_libero_eval.py \
-  --pretrained_checkpoint "/home/wujie/VLA/runs/checkpoint-20000" \
+  --pretrained_checkpoint "${VLA_ROOT:-$HOME/VLA}/runs/checkpoint-20000" \
   --task_suite_name libero_spatial \
   --center_crop True \
   --num_trials_per_task 10
